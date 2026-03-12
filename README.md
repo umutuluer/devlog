@@ -57,16 +57,8 @@ Coolify → **Deploy** butonuna tıkla.
 docker compose up --build
 
 # Ya da direkt
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Uygulama: http://localhost:3000
-
----
-
-## Neden SQLite?
-- Tek geliştirici kullanımı için fazlasıyla yeterli
-- Sıfır konfigürasyon — ayrı DB servisi yok
-- Tek dosya (`/data/devlog.db`) — backup almak `cp` kadar basit
-- Coolify volume ile otomatik persist edilir
