@@ -1,0 +1,17 @@
+{
+  "name": "devlog",
+  "version": "1.0.0",
+  "packageManager": "pnpm@9.15.0",
+  "author": "Umut Uluer <uluerumut@gmail.com>",
+  "description": "Self-hosted time tracker for freelance developers",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "better-sqlite3": "^9.4.3",
+    "cookie-parser": "^1.4.6"
+  }
+}

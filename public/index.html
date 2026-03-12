@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevLog — Saat Takip</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141716;
+    --surface2: #1c201e;
+    --border: #2a2f2c;
+    --accent: #7fff6e;
+    --accent2: #ffda6e;
+    --accent3: #6ec8ff;
+    --text: #e8ede9;
+    --text-dim: #7a8c7e;
+    --text-muted: #4a5c4e;
+    --red: #ff6e6e;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-serif: 'Fraunces', serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(127,255,110,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(127,255,110,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .logo span { color: var(--text-dim); font-style: italic; font-weight: 300; }
+
+  .header-meta { text-align: right; color: var(--text-muted); font-size: 11px; }
+  .live-clock { font-size: 20px; color: var(--text-dim); font-weight: 500; letter-spacing: 2px; }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text-dim); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .card.accent-top  { border-top: 2px solid var(--accent); }
+  .card.accent2-top { border-top: 2px solid var(--accent2); }
+  .card.accent3-top { border-top: 2px solid var(--accent3); }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-row.full { grid-template-columns: 1fr; }
+
+  label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+  textarea { resize: vertical; min-height: 72px; }
+  select option { background: var(--surface2); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+
+  button {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    padding: 12px 24px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary { background: var(--accent); color: #0d0f0e; flex: 1; }
+  .btn-primary:hover { background: #9fffa0; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-warning { background: var(--accent2); color: #0d0f0e; flex: 1; }
+  .btn-warning:hover { background: #ffe99f; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-dim); }
+
+  /* STATS */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 16px; }
+  .stat-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 600; letter-spacing: 1px; }
+  .c-accent  { color: var(--accent); }
+  .c-accent2 { color: var(--accent2); }
+  .c-accent3 { color: var(--accent3); }
+
+  /* LOG */
+  .log-filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn {
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border); padding: 6px 14px;
+    font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+  }
+  .filter-btn.active { background: var(--surface2); color: var(--text); border-color: var(--text-muted); }
+  .filter-btn:hover { border-color: var(--text-dim); color: var(--text-dim); }
+
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    text-align: left; padding: 8px 12px;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); border-bottom: 1px solid var(--border);
+  }
+  .log-table td { padding: 12px; border-bottom: 1px solid rgba(42,47,44,0.5); vertical-align: top; }
+  .log-table tr:hover td { background: var(--surface); }
+  .log-date { color: var(--text-muted); white-space: nowrap; }
+  .log-hours { color: var(--accent); font-weight: 600; white-space: nowrap; text-align: right; }
+  .log-actions { text-align: right; }
+  .log-actions button {
+    background: none; border: none; color: var(--text-muted);
+    font-size: 11px; padding: 4px 8px; cursor: pointer;
+    letter-spacing: 0; text-transform: none; font-weight: 400;
+  }
+  .log-actions button:hover { color: var(--red); }
+
+  .project-tag {
+    display: inline-block;
+    background: rgba(127,255,110,0.1);
+    color: var(--accent); border: 1px solid rgba(127,255,110,0.2);
+    padding: 2px 8px; font-size: 10px; letter-spacing: 1px;
+  }
+
+  .empty-state { text-align: center; padding: 48px; color: var(--text-muted); border: 1px dashed var(--border); }
+  .empty-state .big { font-size: 32px; margin-bottom: 12px; }
+
+  /* REPORT MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 100;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-top: 2px solid var(--accent3); width: 100%;
+    max-width: 700px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px; border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-family: var(--font-serif); font-size: 22px; font-weight: 600; color: var(--accent3); }
+  .modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px 8px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 24px; }
+
+  /* REPORT PRINT */
+  .report-preview {
+    background: #fff; color: #1a1a1a;
+    padding: 40px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; line-height: 1.8;
+  }
+  .report-preview h1 { font-family: 'Fraunces', serif; font-size: 28px; color: #1a1a1a; margin-bottom: 4px; font-weight: 600; }
+  .report-preview .report-meta { color: #666; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #1a1a1a; font-size: 11px; }
+  .report-preview table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  .report-preview th { text-align: left; padding: 8px 10px; background: #1a1a1a; color: #fff; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+  .report-preview td { padding: 8px 10px; border-bottom: 1px solid #eee; font-size: 11px; }
+  .report-preview tr:nth-child(even) td { background: #f8f8f8; }
+  .report-preview .total-row td { background: #f0f0f0; font-weight: 600; border-top: 2px solid #1a1a1a; }
+  .report-preview .summary-box { background: #1a1a1a; color: #fff; padding: 16px 20px; margin-top: 20px; }
+  .report-preview .summary-box .line { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+  .report-preview .summary-box .grand-total { font-size: 18px; font-weight: 600; color: #7fff6e; padding-top: 12px; margin-top: 8px; border-top: 1px solid #333; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--accent); color: #0d0f0e;
+    padding: 12px 20px; font-size: 12px; font-weight: 600; letter-spacing: 1px;
+    z-index: 200; transform: translateY(100px); opacity: 0; transition: all 0.3s;
+  }
+  .toast.error { background: var(--red); }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .loading { color: var(--text-muted); text-align: center; padding: 32px; letter-spacing: 2px; font-size: 11px; }
+
+  /* LOGIN (tek sayfa görünümü) */
+  #login-screen {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  #login-screen.hidden { display: none; }
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    padding: 36px;
+  }
+  .login-card .logo {
+    font-family: var(--font-serif);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -1px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .login-card .logo span { color: var(--text-dim); font-style: italic; font-weight: 300; }
+  .login-subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+    margin-bottom: 28px;
+  }
+  .login-card label { margin-bottom: 8px; }
+  .login-card input[type="text"],
+  .login-card input[type="password"] { margin-bottom: 16px; }
+  .login-remember {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .login-remember input { width: auto; margin: 0; }
+  .login-remember span { font-size: 12px; color: var(--text-dim); text-transform: none; letter-spacing: 0; }
+  .login-card .btn-primary { width: 100%; }
+  .login-error { color: var(--red); font-size: 11px; margin-top: 12px; text-align: center; }
+
+  #app-screen { display: none; }
+  #app-screen.visible { display: block; }
+
+  @media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+    .stats-bar { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN EKRANI (tek sayfa: giriş yapılınca gizlenir) -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">DevLog <span>tracker</span></div>
+    <div class="login-subtitle">SAAT TAKİP SİSTEMİ</div>
+    <form id="loginForm" onsubmit="return doLogin(event)">
+      <label>Kullanıcı adı</label>
+      <input type="text" id="login-user" name="username" autocomplete="username" required autofocus>
+      <label>Şifre</label>
+      <input type="password" id="login-pass" name="password" autocomplete="current-password" required>
+      <div class="login-remember">
+        <input type="checkbox" id="login-remember" name="rememberMe">
+        <span>Beni hatırla</span>
+      </div>
+      <button type="submit" class="btn-primary" id="loginBtn">Giriş yap</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ANA UYGULAMA (giriş sonrası görünür) -->
+<div id="app-screen" class="app">
+  <header>
+    <div>
+      <div class="logo">DevLog <span>tracker</span></div>
+      <div style="color:var(--text-muted);font-size:10px;letter-spacing:2px;margin-top:4px;">SAAT TAKİP SİSTEMİ</div>
+    </div>
+    <div class="header-meta" style="display:flex;align-items:center;gap:20px;">
+      <div>
+        <div class="live-clock" id="liveClock">00:00:00</div>
+        <div id="liveDate" style="margin-top:4px;"></div>
+      </div>
+      <button type="button" class="btn-secondary" style="flex:none;padding:8px 16px;font-size:11px;" onclick="doLogout()">Çıkış</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('entry', this)">✏ Kayıt Ekle</button>
+    <button class="tab" onclick="switchTab('log', this)">📋 Kayıtlar</button>
+    <button class="tab" onclick="switchTab('report', this)">📊 Rapor</button>
+  </div>
+
+  <!-- ENTRY TAB -->
+  <div id="tab-entry" class="tab-content active">
+    <div class="card accent2-top">
+      <div class="section-title">Yeni Çalışma Kaydı</div>
+      <div class="form-row">
+        <div>
+          <label>Proje / Müşteri</label>
+          <input type="text" id="m-project" placeholder="örn. Acme Corp - API" list="projectList" autocomplete="off">
+          <datalist id="projectList"></datalist>
+        </div>
+        <div>
+          <label>Tarih</label>
+          <input type="date" id="m-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Başlangıç Saati</label>
+          <input type="time" id="m-start">
+        </div>
+        <div>
+          <label>Bitiş Saati</label>
+          <input type="time" id="m-end">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div>
+          <label>Yapılan İş</label>
+          <textarea id="m-desc" placeholder="Kullanıcı giriş ekranı tasarlandı, REST API endpoint'leri yazıldı..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="btnSave" onclick="saveEntry()">+ Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG TAB -->
+  <div id="tab-log" class="tab-content">
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-card"><div class="stat-label">Yükleniyor</div><div class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">—</div><div class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">—</div><div class="stat-value">—</div></div>
+      <div class="stat-card"><div class="stat-label">—</div><div class="stat-value">—</div></div>
+    </div>
+    <div class="card">
+      <div class="section-title">Kayıtlar</div>
+      <div class="log-filters" id="logFilters"></div>
+      <div id="logContainer"><div class="loading">YÜKLENİYOR...</div></div>
+    </div>
+  </div>
+
+  <!-- REPORT TAB -->
+  <div id="tab-report" class="tab-content">
+    <div class="card accent3-top">
+      <div class="section-title">Rapor Oluştur</div>
+      <div class="form-row">
+        <div>
+          <label>Başlangıç Tarihi</label>
+          <input type="date" id="r-start">
+        </div>
+        <div>
+          <label>Bitiş Tarihi</label>
+          <input type="date" id="r-end">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Proje Filtresi (boş = hepsi)</label>
+          <input type="text" id="r-project" placeholder="Proje adı..." list="projectList2" autocomplete="off">
+          <datalist id="projectList2"></datalist>
+        </div>
+        <div>
+          <label>Saatlik Ücret (₺, opsiyonel)</label>
+          <input type="number" id="r-rate" placeholder="örn. 500">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Müşteri Adı</label>
+          <input type="text" id="r-client" placeholder="Müşteri adı...">
+        </div>
+        <div>
+          <label>Not (fatura #, dönem vb.)</label>
+          <input type="text" id="r-note" placeholder="Fatura #001">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="openReport()">📄 Raporu Önizle & Yazdır</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Çalışma Raporu</div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" style="font-size:11px;padding:8px 16px;" onclick="printReport()">🖨 Yazdır / PDF</button>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="reportContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────
+let allEntries = [];
+let projects   = [];
+let currentFilter = 'all';
+
+// ─── AUTH (tek sayfa: login ↔ uygulama) ────────────────────
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app-screen').classList.remove('visible');
+}
+
+function showApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.add('visible');
+}
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/auth/check', { credentials: 'include' });
+    return res.ok;
+  } catch (_) { return false; }
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const remember = document.getElementById('login-remember').checked;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Giriş yapılıyor...';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass, rememberMe: remember })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Giriş başarısız.';
+      return false;
+    }
+    showApp();
+    initApp();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Giriş yap';
+  }
+  return false;
+}
+
+async function doLogout() {
+  try {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  } catch (_) {}
+  showLogin();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+function initApp() {
+  const now = new Date();
+  document.getElementById('m-date').value  = fmtDate(now);
+  document.getElementById('r-end').value   = fmtDate(now);
+  const first = new Date(now.getFullYear(), now.getMonth(), 1);
+  document.getElementById('r-start').value = fmtDate(first);
+  setInterval(updateClock, 1000);
+  updateClock();
+  loadProjects();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const ok = await checkAuth();
+  if (ok) {
+    showApp();
+    initApp();
+  }
+});
+
+// ─── CLOCK ────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveClock').textContent = now.toTimeString().slice(0,8);
+  document.getElementById('liveDate').textContent  = now.toLocaleDateString('tr-TR', {weekday:'long',day:'numeric',month:'long'});
+}
+
+// ─── HELPERS ──────────────────────────────────────────────
+function fmtDate(d) { return d.toISOString().split('T')[0]; }
+function fmtHours(mins) {
+  const h = Math.floor(mins/60), m = mins%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function fmtDisplayDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('tr-TR', {day:'numeric',month:'short',year:'numeric'});
+}
+
+// ─── API (cookie ile oturum) ───────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, credentials: 'include', headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (res.status === 401) {
+    showLogin();
+    throw new Error('Oturum sonlandı.');
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Sunucu hatası');
+  }
+  return res.json();
+}
+
+async function loadProjects() {
+  try {
+    projects = await api('GET', '/api/projects');
+    updateDataLists();
+  } catch(e) { /* ignore */ }
+}
+
+function updateDataLists() {
+  ['projectList','projectList2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = projects.map(p => `<option value="${escHtml(p)}">`).join('');
+  });
+}
+
+// ─── TABS ─────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'log') loadLog();
+}
+
+// ─── SAVE ENTRY ───────────────────────────────────────────
+async function saveEntry() {
+  const project = document.getElementById('m-project').value.trim();
+  const date    = document.getElementById('m-date').value;
+  const start   = document.getElementById('m-start').value;
+  const end     = document.getElementById('m-end').value;
+  const desc    = document.getElementById('m-desc').value.trim();
+
+  if (!project) { toast('Proje adı giriniz!', true); return; }
+  if (!date)    { toast('Tarih seçiniz!', true); return; }
+  if (!start || !end) { toast('Başlangıç ve bitiş saatini giriniz!', true); return; }
+
+  const [sh,sm] = start.split(':').map(Number);
+  const [eh,em] = end.split(':').map(Number);
+  let minutes = (eh*60+em) - (sh*60+sm);
+  if (minutes <= 0) minutes += 24*60;
+  if (minutes < 1)  { toast('Geçersiz saat aralığı!', true); return; }
+
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true;
+  btn.textContent = 'KAYDEDİLİYOR...';
+
+  try {
+    await api('POST', '/api/entries', { project, date, start, end, minutes, desc });
+    toast(`✓ ${fmtHours(minutes)} saat kaydedildi`);
+    document.getElementById('m-start').value = '';
+    document.getElementById('m-end').value   = '';
+    document.getElementById('m-desc').value  = '';
+    if (!projects.includes(project)) {
+      projects.push(project);
+      projects.sort();
+      updateDataLists();
+    }
+  } catch(e) {
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '+ KAYDET';
+  }
+}
+
+// ─── LOAD LOG ─────────────────────────────────────────────
+async function loadLog() {
+  document.getElementById('logContainer').innerHTML = '<div class="loading">YÜKLENİYOR...</div>';
+  try {
+    allEntries = await api('GET', '/api/entries');
+    renderLog();
+  } catch(e) {
+    document.getElementById('logContainer').innerHTML = `<div class="empty-state"><div class="big">⚠</div><div>${e.message}</div></div>`;
+  }
+}
+
+function renderLog() {
+  const now = new Date();
+  const todayStr  = fmtDate(now);
+  const monthStr  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  const todayMins = allEntries.filter(e => e.date === todayStr).reduce((a,e) => a+e.minutes, 0);
+  const monthMins = allEntries.filter(e => e.date.startsWith(monthStr)).reduce((a,e) => a+e.minutes, 0);
+  const totalMins = allEntries.reduce((a,e) => a+e.minutes, 0);
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Bugün</div><div class="stat-value c-accent">${fmtHours(todayMins)}</div></div>
+    <div class="stat-card"><div class="stat-label">Bu Ay</div><div class="stat-value c-accent2">${fmtHours(monthMins)}</div></div>
+    <div class="stat-card"><div class="stat-label">Toplam</div><div class="stat-value c-accent3">${fmtHours(totalMins)}</div></div>
+    <div class="stat-card"><div class="stat-label">Kayıt Sayısı</div><div class="stat-value">${allEntries.length}</div></div>
+  `;
+
+  const projs = [...new Set(allEntries.map(e => e.project))];
+  const fc = document.getElementById('logFilters');
+  fc.innerHTML = `<button class="filter-btn ${currentFilter==='all'?'active':''}" onclick="setFilter('all')">Tümü</button>`;
+  projs.forEach(p => {
+    fc.innerHTML += `<button class="filter-btn ${currentFilter===p?'active':''}" onclick="setFilter(${JSON.stringify(p)})">${escHtml(p)}</button>`;
+  });
+
+  const filtered = currentFilter === 'all' ? allEntries : allEntries.filter(e => e.project === currentFilter);
+  const container = document.getElementById('logContainer');
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="big">📭</div><div>Henüz kayıt yok.</div></div>`;
+    return;
+  }
+
+  const rows = filtered.map(e => `
+    <tr>
+      <td class="log-date">${fmtDisplayDate(e.date)}<br><span style="color:var(--text-muted);font-size:11px;">${e.start||''}${e.end?' → '+e.end:''}</span></td>
+      <td><span class="project-tag">${escHtml(e.project)}</span></td>
+      <td style="color:var(--text);max-width:300px">${escHtml(e.desc||'') || '<span style="color:var(--text-muted)">—</span>'}</td>
+      <td class="log-hours">${fmtHours(e.minutes)}</td>
+      <td class="log-actions"><button onclick="deleteEntry(${e.id})">sil</button></td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <table class="log-table">
+      <thead><tr>
+        <th>Tarih / Saat</th><th>Proje</th><th>Açıklama</th>
+        <th style="text-align:right">Süre</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function setFilter(val) { currentFilter = val; renderLog(); }
+
+async function deleteEntry(id) {
+  if (!confirm('Bu kaydı silmek istiyor musunuz?')) return;
+  try {
+    await api('DELETE', `/api/entries/${id}`);
+    allEntries = allEntries.filter(e => e.id !== id);
+    renderLog();
+    toast('Kayıt silindi');
+  } catch(e) { toast(e.message, true); }
+}
+
+// ─── REPORT ───────────────────────────────────────────────
+async function openReport() {
+  const start  = document.getElementById('r-start').value;
+  const end    = document.getElementById('r-end').value;
+  const proj   = document.getElementById('r-project').value.trim();
+  const rate   = parseFloat(document.getElementById('r-rate').value) || 0;
+  const client = document.getElementById('r-client').value.trim() || 'Müşteri';
+  const note   = document.getElementById('r-note').value.trim();
+
+  if (!start || !end) { toast('Tarih aralığı seçiniz!', true); return; }
+
+  let qs = `?from=${start}&to=${end}`;
+  if (proj) qs += `&project=${encodeURIComponent(proj)}`;
+
+  let data;
+  try { data = await api('GET', '/api/entries' + qs); }
+  catch(e) { toast(e.message, true); return; }
+
+  data.sort((a,b) => a.date.localeCompare(b.date));
+  const totalMins   = data.reduce((a,e) => a+e.minutes, 0);
+  const totalHours  = totalMins / 60;
+  const totalAmount = rate ? totalHours * rate : 0;
+
+  const rows = data.map(e => `
+    <tr>
+      <td>${fmtDisplayDate(e.date)}</td>
+      <td>${escHtml(e.project)}</td>
+      <td>${e.start||''}${e.end?' - '+e.end:''}</td>
+      <td>${escHtml(e.desc||'—')}</td>
+      <td style="text-align:right;font-weight:600">${fmtHours(e.minutes)}</td>
+      ${rate ? `<td style="text-align:right">${(e.minutes/60*rate).toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</td>` : ''}
+    </tr>`).join('');
+
+  document.getElementById('reportContent').innerHTML = `
+    <div class="report-preview" id="printArea">
+      <h1>Çalışma Raporu</h1>
+      <div class="report-meta">
+        <strong>Müşteri:</strong> ${escHtml(client)}${note ? ` &nbsp;·&nbsp; ${escHtml(note)}` : ''}<br>
+        <strong>Dönem:</strong> ${fmtDisplayDate(start)} – ${fmtDisplayDate(end)}<br>
+        ${proj ? `<strong>Proje:</strong> ${escHtml(proj)}<br>` : ''}
+        <strong>Oluşturma:</strong> ${new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})}
+      </div>
+      <table>
+        <thead><tr>
+          <th>Tarih</th><th>Proje</th><th>Saat Aralığı</th><th>Açıklama</th><th>Süre</th>
+          ${rate ? '<th>Tutar</th>' : ''}
+        </tr></thead>
+        <tbody>
+          ${rows}
+          <tr class="total-row">
+            <td colspan="4"><strong>TOPLAM</strong></td>
+            <td style="text-align:right"><strong>${fmtHours(totalMins)}</strong> (${totalHours.toFixed(2)} saat)</td>
+            ${rate ? `<td style="text-align:right"><strong>${totalAmount.toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</strong></td>` : ''}
+          </tr>
+        </tbody>
+      </table>
+      <div class="summary-box">
+        <div class="line"><span>Toplam Çalışma Süresi</span><span>${fmtHours(totalMins)} (${totalHours.toFixed(2)} saat)</span></div>
+        <div class="line"><span>Kayıt Sayısı</span><span>${data.length} giriş</span></div>
+        ${rate ? `<div class="line"><span>Saatlik Ücret</span><span>${rate.toLocaleString('tr-TR')} ₺</span></div>` : ''}
+        ${rate ? `<div class="line grand-total"><span>GENEL TOPLAM</span><span>${totalAmount.toLocaleString('tr-TR',{minimumFractionDigits:2})} ₺</span></div>` : ''}
+      </div>
+    </div>`;
+
+  document.getElementById('reportModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('reportModal').classList.remove('open'); }
+
+function printReport() {
+  const content = document.getElementById('printArea').innerHTML;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Çalışma Raporu</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'IBM Plex Mono',monospace;margin:0;background:#fff;color:#1a1a1a;font-size:12px;padding:0}
+      h1{font-family:'Fraunces',serif;font-size:28px;margin-bottom:4px}
+      .report-meta{color:#666;border-bottom:2px solid #1a1a1a;padding-bottom:16px;margin-bottom:24px;font-size:11px;line-height:1.8}
+      table{width:100%;border-collapse:collapse;margin-bottom:24px}
+      th{text-align:left;padding:8px 10px;background:#1a1a1a;color:#fff;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+      td{padding:8px 10px;border-bottom:1px solid #eee;font-size:11px}
+      tr:nth-child(even) td{background:#f8f8f8}
+      .total-row td{background:#f0f0f0;font-weight:600;border-top:2px solid #1a1a1a}
+      .summary-box{background:#1a1a1a;color:#fff;padding:16px 20px}
+      .summary-box .line{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
+      .summary-box .grand-total{font-size:18px;font-weight:600;color:#2d9e25;padding-top:12px;margin-top:8px;border-top:1px solid #333}
+      @media print{body{-webkit-print-color-adjust:exact}}
+    </style></head><body>${content}</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 500);
+}
+
+// ─── TOAST ────────────────────────────────────────────────
+function toast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', isError);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+services:
+  devlog:
+    build: .
+    ports:
+      - "3005:3000"
+    volumes:
+      - devlog_data:/data
+    environment:
+      - PORT=3000
+      - DATA_DIR=/data
+    restart: unless-stopped
+
+volumes:
+  devlog_data:
