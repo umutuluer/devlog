@@ -62,3 +62,27 @@ pnpm run dev
 ```
 
 Uygulama: http://localhost:3000
+
+---
+
+## Ekran Görüntüleri
+
+### Giriş
+
+![DevLog Login](screenshots/login.png)
+
+### Kayıt Ekle
+
+![DevLog Add Entry](screenshots/add-entry.png)
+
+### Kayıtlar
+
+![DevLog Entries](screenshots/entries.png)
+
+### Rapor
+
+![DevLog Report](screenshots/report.png)
+
+### Rapor Önizleme
+
+![DevLog Report Preview](screenshots/report-preview.png)
